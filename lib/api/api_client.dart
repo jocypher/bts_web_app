@@ -5,7 +5,7 @@ class Api {
   Api._();
 
   static final Api instance = Api._();
-  static final String baseUrl = dotenv.env['BASE_URL']??'http://localhost:4000/';
+  static final String baseUrl = dotenv.env['BASE_URL']??'https://bts-knowledge-based-system.onrender.com/';
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,

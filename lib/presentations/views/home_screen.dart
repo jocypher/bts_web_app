@@ -38,10 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void getAllArticles() async {
     try {
-      print("getting results");
       final result = await articleRepoImpl.getAllArticles();
       final recentResult = await articleRepoImpl.getRecentlyAddedArticles();
-      print(result);
       if (!mounted) return;
 
       setState(() {
@@ -53,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
         totalViews = articles.fold(0, (sum, a) => sum + a.viewCount);
       });
     } catch (err) {
-      print("Error fectching articles, $err");
+      rethrow;
     }
   }
 
@@ -90,12 +88,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final width = MediaQuery.of(context).size.width;
 
-
     double horizontalPadding;
 
     if (width < 600) {
       horizontalPadding = 16; // mobile
-    
     } else if (width < 1024) {
       horizontalPadding = 32; // tablet / mobile web
     } else {
@@ -106,17 +102,18 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: horizontalPadding,
+          vertical: 20,
         ),
         child: Column(
           children: [
-      
-           // ==== Header Section ====
+            const SizedBox(height: 30),
+            // ==== Header Section ====
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Image.asset("images/insurance.jpg",width: 120),
+                    Image.asset("images/insurance.jpg", width: 120),
                     Text(
                       "BTS Knowledge App",
                       style: TextStyle(
@@ -127,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-        
+
                 Row(
                   children: [
                     GestureDetector(
@@ -139,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const AddArticleScreen(isEditMode: false),
                           ),
                         );
-        
+
                         // If article was created (result is true), refresh the list
                         if (result == true) {
                           getAllArticles();
@@ -176,11 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      
+
             // ==== Search Section ====
-        
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 100),
+              margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade500, width: 1.25),
                 borderRadius: BorderRadius.circular(12),
@@ -190,9 +186,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 cursorColor: Colors.grey.shade500,
                 onChanged: (value) => searchInfo(searchReq: value),
                 controller: searchController,
-        
+
                 decoration: InputDecoration(
-                  contentPadding: EdgeInsets.only(top: 18,bottom: 18),
+                  contentPadding: EdgeInsets.only(top: 18, bottom: 18),
                   border: InputBorder.none,
                   prefixIconColor: Colors.grey.shade500,
                   prefixIcon: Icon(
@@ -210,11 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 50),
-      
+
             // ==== Statistics Section ====
-        
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -261,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 70),
-            
+
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -273,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            SizedBox(
+            Expanded(
               child: ListView.builder(
                 itemCount: recentArticles.length,
                 physics: ScrollPhysics(parent: BouncingScrollPhysics()),
@@ -306,9 +301,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-        
+
             const SizedBox(height: 30),
-        
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -316,13 +311,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.filter_alt_outlined, color: Colors.blue),
                     const SizedBox(width: 10),
-                    Text("Browse by Category",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                    Text(
+                      "Browse by Category",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
-        
+
                 SizedBox(
                   height: 50,
+                  width: 500,
                   child: ListView.builder(
+                    padding: EdgeInsets.only(right: 20),
                     shrinkWrap: true,
                     scrollDirection: Axis.horizontal,
                     itemCount: categories.length + 1, // +1 for "All"
@@ -337,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-        
+
             Expanded(
               child: ListView.builder(
                 itemCount: displayList.length,
