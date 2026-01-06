@@ -22,7 +22,6 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   }
 
   Future<void> deleteArticle(int id) async {
-    // Show confirmation dialog
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -46,7 +45,6 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
       try {
         await articleRepoImpl.deleteArticle(id);
         if (mounted) {
-          // Return true to indicate deletion
           Navigator.pop(context, true);
         }
       } catch (e) {
@@ -62,221 +60,312 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     }
   }
 
-  
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    double horizontalPadding;
+    final isMobile = width < 600;
 
+    double horizontalPadding;
     if (width < 600) {
-      horizontalPadding = 16; // mobile
+      horizontalPadding = 16;
     } else if (width < 1024) {
-      horizontalPadding = 32; // tablet / mobile web
+      horizontalPadding = 32;
     } else {
-      horizontalPadding = 200; // desktop web
+      horizontalPadding = 64;
     }
 
     final dateTime = DateTime.now();
-    return Scaffold(
-      body: Padding(
-        padding:  EdgeInsets.symmetric(horizontal: horizontalPadding),
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Row(
-                    children: [
-                      Icon(Icons.arrow_back, size: 22),
-                      SizedBox(width: 10),
-                      Text("Back to home"),
-                    ],
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        // Pass the article to edit screen
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddArticleScreen(
-                              isEditMode: true,
-                              articleModel: currentArticle, // Pass current article
-                            ),
-                          ),
-                        );
 
-                        // If article was updated, refresh it
-                        if (result == true) {
-                          try {
-                            final updatedArticle = await articleRepoImpl
-                                .getArticleById(currentArticle.id);
-                            setState(() {
-                              currentArticle = updatedArticle;
-                            });
-                          } catch (e) {
-                            print('Error refreshing article: $e');
-                          }
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 20,
-                              color: Colors.blue,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              "Edit",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () => deleteArticle(currentArticle.id),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 17,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.red),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 20,
-                              color: Colors.red,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              "Delete",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      body: Column(
+        children: [
+          // ==== FIXED HEADER ====
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade200,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
-            const SizedBox(height: 70),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      currentArticle.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    Row(
+            child: SafeArea(
+              bottom: false,
+              child: isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          currentArticle.category.categoryName,
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 11, 129, 225),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                        // Back button
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.arrow_back, size: 20),
+                              SizedBox(width: 8),
+                              Text("Back", style: TextStyle(fontSize: 15)),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 20),
+                        const SizedBox(height: 12),
+                        // Action buttons
                         Row(
                           children: [
-                            const Icon(Icons.person_2_outlined, size: 18),
-                            Text(
-                              currentArticle.author.authorName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                            Expanded(child: _buildEditButton(isMobile)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _buildDeleteButton(isMobile)),
                           ],
                         ),
-                        const SizedBox(width: 20),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_month_outlined, size: 17),
-                            const SizedBox(width: 5),
-                            Text(
-                              "${dateTime.day}/${dateTime.month}/${dateTime.year}",
-                            ),
-                          ],
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.arrow_back, size: 22),
+                              SizedBox(width: 10),
+                              Text("Back to home"),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 20),
                         Row(
                           children: [
-                            const Icon(Icons.remove_red_eye_outlined, size: 17),
-                            const SizedBox(width: 5),
-                            Text("${currentArticle.viewCount} views"),
+                            _buildEditButton(isMobile),
+                            const SizedBox(width: 10),
+                            _buildDeleteButton(isMobile),
                           ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 50),
-                    const Text(
-                      "Steps",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+            ),
+          ),
+
+          // ==== SCROLLABLE CONTENT ====
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    currentArticle.title,
+                    style: TextStyle(
+                      fontSize: isMobile ? 20 : 28,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
                     ),
-                    const SizedBox(height: 10),
-                    Text(currentArticle.content),
-                    const SizedBox(height: 50),
-                    const Text(
-                      "Verification",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Metadata
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 10,
+                    children: [
+                      _buildMetadataChip(
+                        Icons.category_outlined,
+                        currentArticle.category.categoryName,
+                        Colors.blue,
                       ),
+                      _buildMetadataChip(
+                        Icons.person_2_outlined,
+                        currentArticle.author.authorName,
+                        Colors.grey.shade700,
+                      ),
+                      _buildMetadataChip(
+                        Icons.calendar_month_outlined,
+                        "${dateTime.day}/${dateTime.month}/${dateTime.year}",
+                        Colors.grey.shade700,
+                      ),
+                      _buildMetadataChip(
+                        Icons.remove_red_eye_outlined,
+                        "${currentArticle.viewCount} views",
+                        Colors.grey.shade700,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+                  Divider(color: Colors.grey.shade300),
+                  const SizedBox(height: 30),
+
+                  // Steps Section
+                  Text(
+                    "Steps",
+                    style: TextStyle(
+                      fontSize: isMobile ? 20 : 24,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 10),
-                    Text(currentArticle.verification ?? "No verification"),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    currentArticle.content,
+                    style: TextStyle(
+                      fontSize: isMobile ? 15 : 16,
+                      height: 1.6,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                  Divider(color: Colors.grey.shade300),
+                  const SizedBox(height: 30),
+
+                  // Verification Section
+                  Text(
+                    "Verification",
+                    style: TextStyle(
+                      fontSize: isMobile ? 20 : 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    currentArticle.verification ?? "No verification provided",
+                    style: TextStyle(
+                      fontSize: isMobile ? 15 : 16,
+                      height: 1.6,
+                      color: Colors.grey.shade800,
+                      fontStyle: currentArticle.verification == null
+                          ? FontStyle.italic
+                          : FontStyle.normal,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditButton(bool isMobile) {
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddArticleScreen(
+              isEditMode: true,
+              articleModel: currentArticle,
+            ),
+          ),
+        );
+
+        if (result == true) {
+          try {
+            final updatedArticle = await articleRepoImpl.getArticleById(
+              currentArticle.id,
+            );
+            setState(() {
+              currentArticle = updatedArticle;
+            });
+          } catch (e) {
+            print('Error refreshing article: $e');
+          }
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 12 : 18,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.edit_outlined,
+              size: isMobile ? 18 : 20,
+              color: Colors.blue,
+            ),
+            SizedBox(width: isMobile ? 4 : 6),
+            Text(
+              "Edit",
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDeleteButton(bool isMobile) {
+    return GestureDetector(
+      onTap: () => deleteArticle(currentArticle.id),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 12 : 17,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.red),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.delete_outline,
+              size: isMobile ? 18 : 20,
+              color: Colors.red,
+            ),
+            SizedBox(width: isMobile ? 4 : 5),
+            Text(
+              "Delete",
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataChip(IconData icon, String text, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

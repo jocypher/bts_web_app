@@ -33,8 +33,7 @@ class _AddArticleScreenState extends State<AddArticleScreen> {
       titleEdtController.text = widget.articleModel!.title;
       authorEdtController.text = widget.articleModel!.author.authorName;
       categoryEdtController.text = widget.articleModel!.category.categoryName;
-      verificationEdtController.text =
-          widget.articleModel!.verification ?? "No verification";
+      verificationEdtController.text = widget.articleModel!.verification ?? "";
       contentEdtController.text = widget.articleModel!.content;
     }
   }
@@ -46,15 +45,17 @@ class _AddArticleScreenState extends State<AddArticleScreen> {
         contentEdtController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in all fields'),
+          content: Text('Please fill in all required fields'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
+
     setState(() {
       isLoading = true;
     });
+
     try {
       final articleRepoImpl = ArticleRepoImpl();
       if (widget.isEditMode && widget.articleModel != null) {
@@ -64,7 +65,9 @@ class _AddArticleScreenState extends State<AddArticleScreen> {
             content: contentEdtController.text,
             authorName: authorEdtController.text,
             categoryName: categoryEdtController.text,
-            verification: verificationEdtController.text,
+            verification: verificationEdtController.text.isEmpty
+                ? null
+                : verificationEdtController.text,
           ),
           widget.articleModel!.id,
         );
@@ -75,16 +78,31 @@ class _AddArticleScreenState extends State<AddArticleScreen> {
             content: contentEdtController.text,
             authorName: authorEdtController.text,
             categoryName: categoryEdtController.text,
-            verification: verificationEdtController.text,
+            verification: verificationEdtController.text.isEmpty
+                ? null
+                : verificationEdtController.text,
           ),
         );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.isEditMode
+                  ? 'Article updated successfully'
+                  : 'Article created successfully',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
-        print(e);
       }
     } finally {
       if (mounted) {
@@ -93,357 +111,304 @@ class _AddArticleScreenState extends State<AddArticleScreen> {
         });
       }
     }
+  }
 
-    setState(() {
-      isLoading = false;
-    });
-
+  void _handleCancel() {
+    titleEdtController.clear();
+    authorEdtController.clear();
+    categoryEdtController.clear();
+    verificationEdtController.clear();
+    contentEdtController.clear();
     Navigator.pop(context);
   }
 
   @override
   void dispose() {
-    super.dispose();
     titleEdtController.dispose();
     authorEdtController.dispose();
     categoryEdtController.dispose();
     verificationEdtController.dispose();
     contentEdtController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-     final width = MediaQuery.of(context).size.width;
-    double horizontalPadding;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 600;
 
+    double horizontalPadding;
     if (width < 600) {
-      horizontalPadding = 20; // mobile
+      horizontalPadding = 16;
     } else if (width < 1024) {
-      horizontalPadding = 40; // tablet / mobile web
+      horizontalPadding = 32;
     } else {
-      horizontalPadding = 230; // desktop web
+      horizontalPadding = 64;
     }
+
     return Scaffold(
-      body: Padding(
-        padding:  EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 15),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.isEditMode ? "Edit Article" : "Create New Article",
-                    style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            titleEdtController.clear();
-                            authorEdtController.clear();
-                            categoryEdtController.clear();
-                            verificationEdtController.clear();
-                            contentEdtController.clear();
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 23,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(color: Colors.grey.shade400),
-                            borderRadius: BorderRadius.circular(10),
-                            shape: BoxShape.rectangle,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Colors.grey.shade600,
-                              ),
-                              Text(
-                                "cancel",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+      backgroundColor: Colors.grey.shade100,
+      body: Column(
+        children: [
+          // ==== FIXED HEADER ====
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade200,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.isEditMode
+                              ? "Edit Article"
+                              : "Create New Article",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 15),
-                      GestureDetector(
-                        onTap: isLoading ? null : _saveArticle,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 27,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.circular(10),
-                            shape: BoxShape.rectangle,
-                          ),
-                          child: isLoading
-                              ? Text(
-                                  "Loading",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.save_outlined,
-                                      size: 20,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      widget.isEditMode
-                                          ? "Edit Article"
-                                          : "Save Article",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(child: _buildCancelButton(isMobile)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _buildSaveButton(isMobile)),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          widget.isEditMode
+                              ? "Edit Article"
+                              : "Create New Article",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            _buildCancelButton(isMobile),
+                            const SizedBox(width: 12),
+                            _buildSaveButton(isMobile),
+                          ],
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+
+          // ==== SCROLLABLE FORM ====
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 24,
               ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-              Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 18),
-                      children: [
-                        TextSpan(
-                          text: "Title",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "*",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
+                  _buildTextField(
+                    label: "Title",
+                    controller: titleEdtController,
+                    required: true,
+                    maxLines: 1,
+                    isMobile: isMobile,
                   ),
-
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade500,
-                        width: 1.25,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      cursorHeight: 18,
-                      cursorColor: Colors.grey.shade500,
-                      controller: titleEdtController,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.all(10),
-                        border: InputBorder.none,
-                      ),
-                    ),
+                  const SizedBox(height: 24),
+                  _buildTextField(
+                    label: "Category Name",
+                    controller: categoryEdtController,
+                    required: true,
+                    maxLines: 1,
+                    isMobile: isMobile,
                   ),
-                  const SizedBox(height: 30),
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 16),
-                      children: [
-                        TextSpan(
-                          text: "Category Name",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "*",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 24),
+                  _buildTextField(
+                    label: "Author Name",
+                    controller: authorEdtController,
+                    required: true,
+                    maxLines: 1,
+                    isMobile: isMobile,
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade500,
-                        width: 1.25,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      cursorHeight: 18,
-                      cursorColor: Colors.grey.shade500,
-                      controller: categoryEdtController,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.all(10),
-                        border: InputBorder.none,
-                      ),
-                    ),
+                  const SizedBox(height: 24),
+                  _buildTextField(
+                    label: "Content",
+                    controller: contentEdtController,
+                    required: true,
+                    maxLines: isMobile ? 10 : 14,
+                    isMobile: isMobile,
                   ),
-                  const SizedBox(height: 20),
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 16),
-                      children: [
-                        TextSpan(
-                          text: "Author Name",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "*",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 24),
+                  _buildTextField(
+                    label: "Verification",
+                    controller: verificationEdtController,
+                    required: false,
+                    maxLines: isMobile ? 6 : 8,
+                    isMobile: isMobile,
+                    hintText: "Optional: Add verification details",
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade500,
-                        width: 1.25,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      cursorHeight: 18,
-                      cursorColor: Colors.grey.shade500,
-                      controller: authorEdtController,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.all(10),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 16),
-                      children: [
-                        TextSpan(
-                          text: "Content",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "*",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade500,
-                        width: 1.25,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      cursorHeight: 18,
-                      cursorColor: Colors.grey.shade500,
-                      maxLines: 14,
-                      controller: contentEdtController,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.all(10),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 16),
-                      children: [
-                        TextSpan(
-                          text: "Verification",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "*",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade500,
-                        width: 1.25,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      cursorHeight: 18,
-                      cursorColor: Colors.grey.shade500,
-                      maxLines: 7,
-                      controller: verificationEdtController,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.all(10),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required bool required,
+    required int maxLines,
+    required bool isMobile,
+    String? hintText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text.rich(
+          TextSpan(
+            style: TextStyle(
+              fontSize: isMobile ? 15 : 16,
+              fontWeight: FontWeight.w500,
+            ),
+            children: [
+              TextSpan(text: label),
+              if (required)
+                TextSpan(
+                  text: " *",
+                  style: TextStyle(color: Colors.red),
+                ),
             ],
           ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300, width: 1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: controller,
+            maxLines: maxLines,
+            style: TextStyle(fontSize: isMobile ? 14 : 15),
+            decoration: InputDecoration(
+              contentPadding: EdgeInsets.all(isMobile ? 12 : 14),
+              border: InputBorder.none,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: isMobile ? 14 : 15,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCancelButton(bool isMobile) {
+    return GestureDetector(
+      onTap: _handleCancel,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 16 : 20,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.close,
+              size: isMobile ? 18 : 20,
+              color: Colors.grey.shade700,
+            ),
+            SizedBox(width: isMobile ? 4 : 6),
+            Text(
+              "Cancel",
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveButton(bool isMobile) {
+    return GestureDetector(
+      onTap: isLoading ? null : _saveArticle,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 16 : 20,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: isLoading ? Colors.blue.shade300 : Colors.blue,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading)
+              SizedBox(
+                width: isMobile ? 16 : 18,
+                height: isMobile ? 16 : 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            else
+              Icon(
+                Icons.save_outlined,
+                size: isMobile ? 18 : 20,
+                color: Colors.white,
+              ),
+            SizedBox(width: isMobile ? 6 : 8),
+            Text(
+              isLoading
+                  ? "Saving..."
+                  : widget.isEditMode
+                  ? "Update"
+                  : "Save",
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
     );
