@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           // ==== FIXED HEADER SECTION ====
